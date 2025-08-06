@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>บทวิเคราะห์เครื่องจักร - Professional Analytics Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .dashboard-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-left: 5px solid;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-card.kp01 { border-left-color: #e74c3c; }
+        .stat-card.kb01 { border-left-color: #3498db; }
+        .stat-card.ky01 { border-left-color: #2ecc71; }
+        .stat-card.total { border-left-color: #9b59b6; }
+
+        .stat-card .icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: #7f8c8d;
+        }
+
+        .stat-card.kp01 .icon { color: #e74c3c; }
+        .stat-card.kb01 .icon { color: #3498db; }
+        .stat-card.ky01 .icon { color: #2ecc71; }
+        .stat-card.total .icon { color: #9b59b6; }
+
+        .stat-card .number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .label {
+            font-size: 1.1rem;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+
+        .stat-card .percentage {
+            font-size: 0.9rem;
+            color: #95a5a6;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .full-width-chart {
+            grid-column: 1 / -1;
+        }
+
+        .analysis-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .analysis-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .comparison-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid;
+        }
+
+        .comparison-card.strengths { border-left-color: #27ae60; }
+        .comparison-card.weaknesses { border-left-color: #e74c3c; }
+        .comparison-card.opportunities { border-left-color: #f39c12; }
+
+        .comparison-card h4 {
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        .comparison-card ul {
+            list-style: none;
+        }
+
+        .comparison-card li {
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .comparison-card li:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #3498db;
+            font-weight: bold;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .kpi-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #ecf0f1;
+        }
+
+        .kpi-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .kpi-label {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+
+        .recommendation-box {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+
+        .recommendation-box h4 {
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .recommendation-box ul {
+            list-style: none;
+        }
+
+        .recommendation-box li {
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .recommendation-box li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+
+        .responsive-table {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        th {
+            background: #34495e;
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .stat-card .number {
+                font-size: 2rem;
+            }
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+            font-size: 1.2rem;
+            color: #7f8c8d;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.8s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container fade-in">
+        <header class="header">
+            <h1><i class="fas fa-industry"></i> บทวิเคราะห์เครื่องจักร</h1>
+            <p class="subtitle">Professional Machinery Analytics Dashboard | ข้อมูล 1,114 เครื่องจักรทั้ง 3 โรงงาน</p>
+        </header>
+
+        <div class="main-content">
+            <!-- สถิติภาพรวม -->
+            <div class="stats-grid">
+                <div class="stat-card total">
+                    <div class="icon"><i class="fas fa-cogs"></i></div>
+                    <div class="number">1,114</div>
+                    <div class="label">เครื่องจักรทั้งหมด</div>
+                    <div class="percentage">100%</div>
+                </div>
+                <div class="stat-card kp01">
+                    <div class="icon"><i class="fas fa-industry"></i></div>
+                    <div class="number">548</div>
+                    <div class="label">โรงงาน KP01</div>
+                    <div class="percentage">49.2%</div>
+                </div>
+                <div class="stat-card kb01">
+                    <div class="icon"><i class="fas fa-factory"></i></div>
+                    <div class="number">381</div>
+                    <div class="label">โรงงาน KB01</div>
+                    <div class="percentage">34.2%</div>
+                </div>
+                <div class="stat-card ky01">
+                    <div class="icon"><i class="fas fa-microchip"></i></div>
+                    <div class="number">185</div>
+                    <div class="label">โรงงาน KY01</div>
+                    <div class="percentage">16.6%</div>
+                </div>
+            </div>
+
+            <!-- กราฟหลัก -->
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <h3 class="chart-title">การกระจายตัวของเครื่องจักรตามโรงงาน</h3>
+                    <canvas id="plantDistributionChart"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <h3 class="chart-title">เปรียบเทียบสัดส่วนการผลิต</h3>
+                    <canvas id="productionComparisonChart"></canvas>
+                </div>
+                
+                <div class="chart-container full-width-chart">
+                    <h3 class="chart-title">การกระจายเครื่องจักรตามสายการผลิต (Production Lines)</h3>
+                    <canvas id="productionLinesChart"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <h3 class="chart-title">เปรียบเทียบประเภทเครื่องจักร (Blow vs Cut)</h3>
+                    <canvas id="machineTypeChart"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <h3 class="chart-title">ดัชนีประสิทธิภาพตามโรงงาน</h3>
+                    <canvas id="efficiencyChart"></canvas>
+                </div>
+            </div>
+
+            <!-- การวิเคราะห์เชิงลึก -->
+            <div class="analysis-section">
+                <h3 class="analysis-title"><i class="fas fa-chart-line"></i> การวิเคราะห์เชิงลึกแต่ละโรงงาน</h3>
+                
+                <div class="comparison-grid">
+                    <div class="comparison-card strengths">
+                        <h4><i class="fas fa-trophy"></i> จุดแข็ง (Strengths)</h4>
+                        <ul>
+                            <li><strong>KP01:</strong> ฐานการผลิตใหญ่ที่สุด เฉพาะทางด้านถุงซิป</li>
+                            <li><strong>KB01:</strong> ความหลากหลายสูง รองรับงานได้หลายประเภท</li>
+                            <li><strong>KY01:</strong> เทคโนโลยีทันสมัย ประสิทธิภาพสูง</li>
+                            <li>การกระจายความเสี่ยงทั้ง 3 โรงงาน</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="comparison-card weaknesses">
+                        <h4><i class="fas fa-exclamation-triangle"></i> จุดอ่อน (Weaknesses)</h4>
+                        <ul>
+                            <li><strong>KP01:</strong> พึ่งพาตลาดถุงซิปมากเกินไป</li>
+                            <li><strong>KB01:</strong> เครื่องจักรอาจล้าสมัย</li>
+                            <li><strong>KY01:</strong> กำลังการผลิตจำกัด</li>
+                            <li>การบริหารจัดการข้ามโรงงานอาจซับซ้อน</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="comparison-card opportunities">
+                        <h4><i class="fas fa-lightbulb"></i> โอกาส (Opportunities)</h4>
+                        <ul>
+                            <li>ขยายกำลังการผลิตใน KY01</li>
+                            <li>อัพเกรดเทคโนโลยีใน KB01</li>
+                            <li>หาผลิตภัณฑ์ใหม่สำหรับ KP01</li>
+                            <li>เพิ่มประสิทธิภาพการใช้เครื่องจักร</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- ตารางเปรียบเทียบ -->
+                <div class="responsive-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>โรงงาน</th>
+                                <th>จำนวนเครื่องจักร</th>
+                                <th>สัดส่วน (%)</th>
+                                <th>สายการผลิตหลัก</th>
+                                <th>จุดเด่น</th>
+                                <th>คะแนนประสิทธิภาพ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>KP01</strong></td>
+                                <td>548</td>
+                                <td>49.2%</td>
+                                <td>Line A Cut, Line A Blow</td>
+                                <td>เฉพาะทางถุงซิป</td>
+                                <td>8.5/10</td>
+                            </tr>
+                            <tr>
+                                <td><strong>KB01</strong></td>
+                                <td>381</td>
+                                <td>34.2%</td>
+                                <td>Line 1 Blow, Line 1 Cut</td>
+                                <td>ความหลากหลาย</td>
+                                <td>7.2/10</td>
+                            </tr>
+                            <tr>
+                                <td><strong>KY01</strong></td>
+                                <td>185</td>
+                                <td>16.6%</td>
+                                <td>Line H Blow, Line T Blow</td>
+                                <td>เทคโนโลยีทันสมัย</td>
+                                <td>9.1/10</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- KPI Dashboard -->
+                <h4 style="margin-top: 30px; margin-bottom: 15px; color: #2c3e50;">ตัวชี้วัดความสำเร็จ (KPIs)</h4>
+                <div class="kpi-grid">
+                    <div class="kpi-item">
+                        <div class="kpi-value">83.4%</div>
+                        <div class="kpi-label">การกระจุกตัวใน 2 โรงงานหลัก</div>
+                    </div>
+                    <div class="kpi-item">
+                        <div class="kpi-value">2.96</div>
+                        <div class="kpi-label">อัตราส่วน KP01:KB01</div>
+                    </div>
+                    <div class="kpi-item">
+                        <div class="kpi-value">137</div>
+                        <div class="kpi-label">เครื่องจักรต่อสายการผลิต (เฉลี่ย)</div>
+                    </div>
+                    <div class="kpi-item">
+                        <div class="kpi-value">3</div>
+                        <div class="kpi-label">จำนวนโรงงาน</div>
+                    </div>
+                    <div class="kpi-item">
+                        <div class="kpi-value">58.4%</div>
+                        <div class="kpi-label">สัดส่วนเครื่องตัด (Cut)</div>
+                    </div>
+                    <div class="kpi-item">
+                        <div class="kpi-value">41.6%</div>
+                        <div class="kpi-label">สัดส่วนเครื่องเป่า (Blow)</div>
+                    </div>
+                </div>
+
+                <!-- ข้อเสนอแนะ -->
+                <div class="recommendation-box">
+                    <h4><i class="fas fa-recommendations"></i> ข้อเสนอแนะเชิงกลยุทธ์</h4>
+                    <ul>
+                        <li><strong>ระยะสั้น (0-6 เดือน):</strong> เพิ่มประสิทธิภาพการใช้เครื่องจักรใน KB01 และ KP01</li>
+                        <li><strong>ระยะกลาง (6-18 เดือน):</strong> ขยายกำลังการผลิตใน KY01 เพื่อลดการพึ่งพา KP01</li>
+                        <li><strong>ระยะยาว (1-3 ปี):</strong> พัฒนาผลิตภัณฑ์ใหม่และอัพเกรดเทคโนโลยีทั้ง 3 โรงงาน</li>
+                        <li><strong>การบริหารความเสี่ยง:</strong> สร้างแผนสำรองหากโรงงานหลักมีปัญหา</li>
+                        <li><strong>การลงทุน:</strong> พิจารณาลงทุนเครื่องจักรใหม่ใน KY01 เพื่อเพิ่มสัดส่วน</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ข้อมูลสำหรับกราฟ
+        const plantData = {
+            labels: ['KP01', 'KB01', 'KY01'],
+            datasets: [{
+                data: [548, 381, 185],
+                backgroundColor: [
+                    '#e74c3c',
+                    '#3498db', 
+                    '#2ecc71'
+                ],
+                borderColor: [
+                    '#c0392b',
+                    '#2980b9',
+                    '#27ae60'
+                ],
+                borderWidth: 2,
+                hoverOffset: 10
+            }]
+        };
+
+        const productionLinesData = {
+            labels: [
+                'Line A Cut (KP01)', 'Line A Blow (KP01)', 'Line C Cut (KP01)', 'Line B Cut (KP01)',
+                'Line 1 Blow (KB01)', 'Line 1 Cut (KB01)', 'Line 4 Cut (KB01)', 'Line 3 Blow (KB01)',
+                'Line H Blow (KY01)', 'Line H Cut (KY01)', 'Line T Blow (KY01)', 'Line T Cut (KY01)'
+            ],
+            datasets: [{
+                label: 'จำนวนเครื่องจักร',
+                data: [137, 112, 112, 82, 34, 34, 24, 23, 51, 46, 44, 39],
+                backgroundColor: [
+                    '#e74c3c', '#e74c3c', '#e74c3c', '#e74c3c',
+                    '#3498db', '#3498db', '#3498db', '#3498db',
+                    '#2ecc71', '#2ecc71', '#2ecc71', '#2ecc71'
+                ],
+                borderColor: '#2c3e50',
+                borderWidth: 1
+            }]
+        };
+
+        const machineTypeData = {
+            labels: ['เครื่องตัด (Cut)', 'เครื่องเป่า (Blow)'],
+            datasets: [{
+                data: [651, 463], // คำนวณจากข้อมูลทั้งหมด
+                backgroundColor: ['#f39c12', '#9b59b6'],
+                borderColor: ['#e67e22', '#8e44ad'],
+                borderWidth: 2
+            }]
+        };
+
+        const efficiencyData = {
+            labels: ['KP01', 'KB01', 'KY01'],
+            datasets: [{
+                label: 'ดัชนีประสิทธิภาพ (0-10)',
+                data: [8.5, 7.2, 9.1],
+                backgroundColor: ['#e74c3c', '#3498db', '#2ecc71'],
+                borderColor: '#2c3e50',
+                borderWidth: 1
+            }]
+        };
+
+        const comparisonData = {
+            labels: ['จำนวนเครื่องจักร', 'ประสิทธิภาพ', 'ความหลากหลาย', 'เทคโนโลยี'],
+            datasets: [{
+                label: 'KP01',
+                data: [9.8, 8.5, 6.0, 7.5],
+                backgroundColor: 'rgba(231, 76, 60, 0.2)',
+                borderColor: '#e74c3c',
+                borderWidth: 2
+            }, {
+                label: 'KB01', 
+                data: [6.8, 7.2, 9.5, 6.0],
+                backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                borderColor: '#3498db',
+                borderWidth: 2
+            }, {
+                label: 'KY01',
+                data: [3.3, 9.1, 7.0, 9.8],
+                backgroundColor: 'rgba(46, 204, 113, 0.2)',
+                borderColor: '#2ecc71',
+                borderWidth: 2
+            }]
+        };
+
+        // การตั้งค่ากราฟ
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        font: {
+                            family: 'Segoe UI',
+                            size: 12
+                        }
+                    }
+                }
+            }
+        };
+
+        // สร้างกราห
+        window.onload = function() {
+            // กราฟการกระจายตัวโรงงาน
+            const ctx1 = document.getElementById('plantDistributionChart').getContext('2d');
+            new Chart(ctx1, {
+                type: 'doughnut',
+                data: plantData,
+                options: {
+                    ...chartOptions,
+                    plugins: {
+                        ...chartOptions.plugins,
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed;
+                                    const percentage = ((value / 1114) * 100).toFixed(1);
+                                    return `${label}: ${value} เครื่อง (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // กราฟสายการผลิต
+            const ctx2 = document.getElementById('productionLinesChart').getContext('2d');
+            new Chart(ctx2, {
+                type: 'bar',
+                data: productionLinesData,
+                options: {
+                    ...chartOptions,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'จำนวนเครื่องจักร'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'สายการผลิต'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // กราฟประเภทเครื่องจักร
+            const ctx3 = document.getElementById('machineTypeChart').getContext('2d');
+            new Chart(ctx3, {
+                type: 'pie',
+                data: machineTypeData,
+                options: {
+                    ...chartOptions,
+                    plugins: {
+                        ...chartOptions.plugins,
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed;
+                                    const percentage = ((value / 1114) * 100).toFixed(1);
+                                    return `${label}: ${value} เครื่อง (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // กราฟประสิทธิภาพ
+            const ctx4 = document.getElementById('efficiencyChart').getContext('2d');
+            new Chart(ctx4, {
+                type: 'bar',
+                data: efficiencyData,
+                options: {
+                    ...chartOptions,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 10,
+                            title: {
+                                display: true,
+                                text: 'คะแนนประสิทธิภาพ (0-10)'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // กราฟเปรียบเทียบ (Radar Chart)
+            const ctx5 = document.getElementById('productionComparisonChart').getContext('2d');
+            new Chart(ctx5, {
+                type: 'radar',
+                data: comparisonData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 10
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        };
+
+        // เพิ่มเอฟเฟคเคาน์เตอร์
+        function animateCounters() {
+            const counters = document.querySelectorAll('.stat-card .number');
+            counters.forEach(counter => {
+                const target = parseInt(counter.textContent.replace(/,/g, ''));
+                let current = 0;
+                const increment = target / 100;
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= target) {
+                        counter.textContent = target.toLocaleString();
+                        clearInterval(timer);
+                    } else {
+                        counter.textContent = Math.floor(current).toLocaleString();
+                    }
+                }, 20);
+            });
+        }
+
+        // เรียกใช้เอฟเฟค
+        setTimeout(animateCounters, 500);
+    </script>
+</body>
+</html>
