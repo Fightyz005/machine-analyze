@@ -1,0 +1,29 @@
+/* Basic styles for KPI UI Prototype */
+:root {
+  --brand: #0d6efd;
+  --ok: #198754;
+  --warn: #ffc107;
+  --bad: #dc3545;
+}
+
+body { background-color: #f7f7f9; }
+
+.card-kpi {
+  transition: transform .1s ease-in-out, box-shadow .1s ease-in-out;
+}
+.card-kpi:hover { transform: translateY(-2px); box-shadow: 0 0.5rem 1rem rgba(0,0,0,.08); }
+
+.table thead th { white-space: nowrap; }
+.table td input[type="number"] { width: 110px; }
+
+.traffic-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.traffic-ok { background: var(--ok); }
+.traffic-warn { background: var(--warn); }
+.traffic-bad { background: var(--bad); }
+
+.empty-state { padding: 3rem 1rem; text-align: center; color: #6c757d; }
+
+.sticky-actions { position: sticky; bottom: 0; background: #fff; padding: .75rem; border-top: 1px solid #dee2e6; }
+
+.form-inline-gap > * { margin-right: .5rem; }
+
